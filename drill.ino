@@ -1,13 +1,15 @@
-float referenceDistance = 150.0;
+float reference_distance = 150.0;
+int angle_drill_limit = 20;
+
 int distance_0;
 int distance_1;
 int distance_2;
+int angle_sensor_degree;
+
 float distance_drill;
 float depth;
 bool is_angle_out_of_limit;
-int angle_drill_limit = 20;
 int angle_led;
-int angle_sensor_degree = 25;
 
 void setup() {
   Serial.begin(9600);
@@ -19,24 +21,34 @@ void loop() {
   distance_1 = getDistance(1);
   distance_2 = getDistance(2);
 
+  angle_sensor_degree = getAngleOfSensor();
+
   distance_drill = calculateDistanceDrill();
 
   if (checkInput())
   {
     Serial.print("Signal arrived for storing reference\n");
-    referenceDistance = distance_drill;
+    reference_distance = distance_drill;
   }
 
   depth = calculateDepth();
 
-  angle_led = calculateLedAngle();
   is_angle_out_of_limit = calculateDrillAngle();
 
+  if (is_angle_out_of_limit) {
+    angle_led = calculateLedAngle();
+  }
+  else {
+    angle_led = 0;
+  }
+  
   generateOutput();
 
   delay(2000);
 
 }
+
+#pragma region Read_Inputs
 
 int getDistance(int pin) {
   
@@ -46,11 +58,21 @@ int getDistance(int pin) {
   return random(100, 150);
 }
 
+int getAngleOfSensor() {
+
+  // TODO Read sensor
+  return 25;
+}
+
 bool checkInput() {
 
   // TODO Read button
   return (Serial.read() != -1); // Can be triggered by any input like pushing "Enter"
 }
+
+#pragma endregion
+
+#pragma region Process_Inputs
 
 float calculateDistanceDrill() {
   float angle_sensor_radian = (angle_sensor_degree * 71.0) / 4068.0; // Degree to radian conversion
@@ -58,11 +80,11 @@ float calculateDistanceDrill() {
 }
 
 float calculateDepth() {
-  if (referenceDistance > distance_drill) {
-    return referenceDistance - distance_drill;
+  if (reference_distance > distance_drill) {
+    return reference_distance - distance_drill;
   }
   else {
-    return 0.0; // Do not want to show negítive values.
+    return 0.0; // Do not want to show negative values.
   }
 }
 
@@ -74,13 +96,13 @@ int calculateLedAngle() {
     int d_2 = distance_2 - distance_0;
     angle = ((d_1 * 120) + (d_2 * 240)) / (d_1 + d_2);
   }
-  else if (getMinDistance() == distance_1) // Distance_1 is the minimum.
+  else if (getMinDistance() == distance_1)
   {
     int d_0 = distance_0 - distance_1;
     int d_2 = distance_2 - distance_1;
     angle = ((d_0 * 360) + (d_2 * 240)) / (d_0 + d_2);
   }
-  else // Distance_2 is the minimum
+  else
   {
     int d_0 = distance_0 - distance_2;
     int d_1 = distance_1 - distance_2;
@@ -92,7 +114,7 @@ int calculateLedAngle() {
     angle = angle - 360;
   }
 
-  return 360 - angle; // Need to show exactly the other end.
+  return 360 - angle; // Need to show exactly the other side.
 }
 
 int getMinDistance() {
@@ -129,12 +151,16 @@ bool calculateDrillAngle() {
   return (getMaxDistance() - getMinDistance()) >= angle_drill_limit;
 }
 
+#pragma endregion
+
+#pragma region Write_Outputs
+
 void generateOutput() {
 
-  // TODO Drive speaker and / or led
+  // TODO Drive speaker and led-circle
   Serial.print("\n\n################################################\n");
   Serial.print("Reference_distance: ");
-  Serial.print(referenceDistance);
+  Serial.print(reference_distance);
   Serial.print("  ---  ");
   Serial.print("distance_0: ");
   Serial.print(distance_0);
@@ -251,3 +277,5 @@ void generateOutput() {
     Serial.print("\n\nBeeping: OFF \n");
   }
 }
+
+#pragma endregion
