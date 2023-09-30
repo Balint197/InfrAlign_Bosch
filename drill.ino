@@ -1,3 +1,28 @@
+int i = 0; // just for the simulation.
+
+int simulation[20][3] = {
+  { 150, 150, 150},
+  { 150, 150, 150},
+  { 150, 150, 150},
+  { 148, 145, 146},
+  { 143, 140, 143},
+  { 135, 133, 134},
+  { 140, 130, 129},
+  { 140, 119, 122},
+  { 140, 119, 122},
+  { 130, 125, 124},
+  { 126, 125, 126},
+  { 130, 125, 125},
+  { 110, 133, 136},
+  { 105, 137, 137},
+  { 118, 140, 120},
+  { 130, 125, 125},
+  { 126, 125, 126},
+  { 112, 115, 113},
+  { 100, 99, 105},
+  { 95, 96, 97},
+};
+
 float reference_distance = 150.0;
 int angle_drill_limit = 20;
 
@@ -31,6 +56,15 @@ void loop() {
     reference_distance = distance_drill;
   }
 
+#pragma region Simulation
+  i = i + 1;
+  if (i >= sizeof(simulation)/sizeof(simulation[0])) {
+    i = 0;
+  }
+
+  if (i == 2) reference_distance = distance_drill; // SImulating the button press
+#pragma endregion
+
   depth = calculateDepth();
 
   is_angle_out_of_limit = calculateDrillAngle();
@@ -54,8 +88,7 @@ int getDistance(int pin) {
   
   // TODO Read sensor
   //digitalRead(pin),BIN
-
-  return random(100, 150);
+  return simulation[i][pin];
 }
 
 int getAngleOfSensor() {
@@ -114,7 +147,12 @@ int calculateLedAngle() {
     angle = angle - 360;
   }
 
-  return 360 - angle; // Need to show exactly the other side.
+  angle = angle + 180; // Need to show exactly the other side.
+  if (angle >= 360) {
+    angle = angle - 360;
+  }
+
+  return angle;
 }
 
 int getMinDistance() {
@@ -158,7 +196,9 @@ bool calculateDrillAngle() {
 void generateOutput() {
 
   // TODO Drive speaker and led-circle
-  Serial.print("\n\n################################################\n");
+  Serial.print("\n\n");
+  Serial.print(i);
+  Serial.print(". simulation step    ################################################\n");
   Serial.print("Reference_distance: ");
   Serial.print(reference_distance);
   Serial.print("  ---  ");
